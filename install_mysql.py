@@ -39,7 +39,11 @@ def yum_install(args):
         kwarg = {
             'name':package
         }
-        yb.install(**kwarg)
+        try:
+            yb.install(**kwarg)
+            print('{0} install  succeess'.format(package))
+        except yum.Errors.InstallError as e:
+            raise SystemExit('{0} install failed, mysqld command cannot be executed. '.format(package))
         yb.resolveDeps()
         yb.buildTransaction()
         yb.processTransaction()
@@ -82,6 +86,7 @@ def create_dir(install_dir,data_dir,logs,tmp,data):
 
 def unpacke(package,links,mysql_install_dir):
     package_dir = os.path.splitext(os.path.splitext(package)[0])[0].split('/')[-1]
+
     if not os.path.exists(mysql_install_dir+ "/" + package_dir):
         with tarfile.open(package,'r:gz') as tar:
             tar.extractall(mysql_install_dir)
@@ -103,10 +108,13 @@ def unpacke(package,links,mysql_install_dir):
 
 def check_mysqld(links):
     code,out = exec_cmd("/usr/bin/ldd {0}/bin/mysqld".format(links))
-
     uninstall_packge = re.findall('not found', out)
 
     if uninstall_packge:
+        print("""
+                mysqld: 
+{0}
+                """.format(out))
         for file_modul in out.split('\n'):
             if "not found" in file_modul :
                 packe = file_modul.split('.')[0]
@@ -317,8 +325,9 @@ if __name__ == '__main__':
     groupname = username
     mysql_install_dir = '/opt/mysql'
     mysql_data_dir = '/data/mysql/mysql{}'.format(port)
+    #package = os.path.abspath("mysql-5.7.22-linux-glibc2.12-x86_64.tar.gz")
     curre_path = os.getcwd()
-    package = os.path.abspath(get_packenanme(curre_path)
+    package = os.path.abspath(get_packenanme(curre_path))
     links = '/usr/local/mysql'
     mysql_file = '{0}/my{1}.cnf'.format(mysql_data_dir, port)
     g_info = None
