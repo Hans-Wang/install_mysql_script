@@ -317,9 +317,8 @@ if __name__ == '__main__':
     groupname = username
     mysql_install_dir = '/opt/mysql'
     mysql_data_dir = '/data/mysql/mysql{}'.format(port)
-    #package = os.path.abspath("mysql-5.7.22-linux-glibc2.12-x86_64.tar.gz")
     curre_path = os.getcwd()
-    package = get_packenanme(curre_path)
+    package = os.path.abspath(get_packenanme(curre_path)
     links = '/usr/local/mysql'
     mysql_file = '{0}/my{1}.cnf'.format(mysql_data_dir, port)
     g_info = None
