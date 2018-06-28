@@ -82,7 +82,6 @@ def create_dir(install_dir,data_dir,logs,tmp,data):
 
 def unpacke(package,links,mysql_install_dir):
     package_dir = os.path.splitext(os.path.splitext(package)[0])[0].split('/')[-1]
-    print(package_dir)
     if not os.path.exists(mysql_install_dir+ "/" + package_dir):
         with tarfile.open(package,'r:gz') as tar:
             tar.extractall(mysql_install_dir)
@@ -320,9 +319,7 @@ if __name__ == '__main__':
     mysql_data_dir = '/data/mysql/mysql{}'.format(port)
     #package = os.path.abspath("mysql-5.7.22-linux-glibc2.12-x86_64.tar.gz")
     curre_path = os.getcwd()
-    print(curre_path )
     package = get_packenanme(curre_path)
-    print(package)
     links = '/usr/local/mysql'
     mysql_file = '{0}/my{1}.cnf'.format(mysql_data_dir, port)
     g_info = None
