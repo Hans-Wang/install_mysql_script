@@ -4,6 +4,8 @@
 # mail:hans@pymysql.com
 
 import os
+import re
+import yum
 import sys
 import pwd
 import grp
@@ -23,6 +25,25 @@ def exec_cmd(cmd):
     if CMD.returncode != 0:
         return CMD.returncode, stderr
     return CMD.returncode, stdout
+
+def yum_install(args):
+    yb=yum.YumBase()
+    #inst = yb.rpmdb.returnPackages()
+    #installed=[x.name for x in inst]
+    args = args.strip()
+    packages=[]
+    packages.append(args)
+
+    for package in packages:
+        print('Installing {0}'.format(package))
+        kwarg = {
+            'name':package
+        }
+        yb.install(**kwarg)
+        yb.resolveDeps()
+        yb.buildTransaction()
+        yb.processTransaction()
+
 
 def create_group(groupname):
     if not g_info:
@@ -61,6 +82,7 @@ def create_dir(install_dir,data_dir,logs,tmp,data):
 
 def unpacke(package,links,mysql_install_dir):
     package_dir = os.path.splitext(os.path.splitext(package)[0])[0].split('/')[-1]
+    print(package_dir)
     if not os.path.exists(mysql_install_dir+ "/" + package_dir):
         with tarfile.open(package,'r:gz') as tar:
             tar.extractall(mysql_install_dir)
@@ -73,9 +95,23 @@ def unpacke(package,links,mysql_install_dir):
     except OSError:
         exec_cmd('chown -R %s:%s %s' % (username,groupname, mysql_install_dir))
         exec_cmd('chown -R %s:%s %s' % (username,groupname, links))
+        check_mysqld(links)
         return '%s File exists' % links
     exec_cmd('chown -R %s:%s %s' % (username,groupname, mysql_install_dir))
     exec_cmd('chown -R %s:%s %s' % (username,groupname, links))
+    check_mysqld(links)
+
+
+def check_mysqld(links):
+    code,out = exec_cmd("/usr/bin/ldd {0}/bin/mysqld".format(links))
+
+    uninstall_packge = re.findall('not found', out)
+
+    if uninstall_packge:
+        for file_modul in out.split('\n'):
+            if "not found" in file_modul :
+                packe = file_modul.split('.')[0]
+                yum_install(packe)
 
     
 def initialize_mysql(mysql_cmd, mysql_file, mysql_option=''):
@@ -242,6 +278,16 @@ performance-schema-instrument                                           ='memory
         print('Execute %s successful!'%(cmd))
 
 
+def get_packenanme(curre_path):
+
+    filename_list = os.listdir(curre_path)
+    for filename in filename_list:
+        if 'mysql' in filename and 'tar.gz' in filename:
+            return filename 
+        
+
+
+
 def main():
     
     try:
@@ -272,7 +318,11 @@ if __name__ == '__main__':
     groupname = username
     mysql_install_dir = '/opt/mysql'
     mysql_data_dir = '/data/mysql/mysql{}'.format(port)
-    package = os.path.abspath("mysql-5.7.22-linux-glibc2.12-x86_64.tar.gz")
+    #package = os.path.abspath("mysql-5.7.22-linux-glibc2.12-x86_64.tar.gz")
+    curre_path = os.getcwd()
+    print(curre_path )
+    package = get_packenanme(curre_path)
+    print(package)
     links = '/usr/local/mysql'
     mysql_file = '{0}/my{1}.cnf'.format(mysql_data_dir, port)
     g_info = None
